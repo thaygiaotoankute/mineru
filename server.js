@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const multer = require('multer');
+const nodefetch = require('node-fetch@2');
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
