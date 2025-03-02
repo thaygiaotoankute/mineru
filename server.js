@@ -213,6 +213,34 @@ app.get('/proxy-zip', async (req, res) => {
   }
 });
 
+app.post('/proxy-pandoc', async (req, res) => {
+  try {
+    const { markdown } = req.body;
+    if (!markdown) {
+      return res.status(400).json({ error: true, message: 'Thiếu markdown trong yêu cầu' });
+    }
+    const response = await axios.post('https://pandoc-api.onrender.com/convert', { markdown }, {
+      responseType: 'arraybuffer',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/octet-stream'
+      }
+    });
+    res.set('Access-Control-Allow-Origin', '*');
+    if (response.headers['content-type']) {
+      res.set('Content-Type', response.headers['content-type']);
+    }
+    res.send(response.data);
+  } catch (error) {
+    console.error('Proxy Pandoc error:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: true,
+      message: error.response?.data?.msg || error.message
+    });
+  }
+});
+
+
 // Khởi động server
 app.listen(PORT, () => {
   console.log(`Server đang chạy tại cổng ${PORT}`);
