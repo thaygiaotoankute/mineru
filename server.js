@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const multer = require('multer');
+const fetch = require('node-fetch'); // Đã cài node-fetch@2 qua npm install node-fetch@2
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
@@ -89,7 +90,7 @@ app.post('/api/pollResults', async (req, res) => {
   }
 });
 
-// Endpoint để upload file PDF trực tiếp đến Mineru (một endpoint duy nhất)
+// API Endpoint: Upload file PDF trực tiếp đến Mineru
 app.post('/api/processPDF', upload.single('pdfFile'), async (req, res) => {
   try {
     const mineruToken = req.body.mineruToken;
@@ -138,14 +139,12 @@ app.post('/api/processPDF', upload.single('pdfFile'), async (req, res) => {
     }
     
     try {
-      // BƯỚC 2: Upload file - THAY ĐỔI TẠI ĐÂY
-      // Sử dụng fetch API với các tùy chọn cơ bản nhất để tránh thay đổi headers
-      const fetch = require('node-fetch');
+      // BƯỚC 2: Upload file
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: req.file.buffer,
         headers: {
-          // Không đặt Content-Type hoặc các headers khác
+          // Không đặt Content-Type để OSS tự động xác định
         }
       });
       
@@ -185,6 +184,31 @@ app.post('/api/processPDF', upload.single('pdfFile'), async (req, res) => {
       error: true,
       message: errorMessage,
       details: errorDetails
+    });
+  }
+});
+
+// *** Endpoint proxy ZIP để vượt qua CORS ***
+app.get('/proxy-zip', async (req, res) => {
+  try {
+    const zipUrl = req.query.url;
+    if (!zipUrl) {
+      return res.status(400).json({ error: true, message: 'Thiếu URL file ZIP trong query string' });
+    }
+    
+    const response = await axios.get(zipUrl, { responseType: 'arraybuffer' });
+    
+    res.set('Access-Control-Allow-Origin', '*');
+    if (response.headers['content-type']) {
+      res.set('Content-Type', response.headers['content-type']);
+    }
+    
+    res.send(response.data);
+  } catch (error) {
+    console.error('Proxy error:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: true,
+      message: error.response?.data?.msg || error.message
     });
   }
 });
