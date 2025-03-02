@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const multer = require('multer');
-const nodefetch = require('node-fetch@2');
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
@@ -141,7 +140,7 @@ app.post('/api/processPDF', upload.single('pdfFile'), async (req, res) => {
     try {
       // BƯỚC 2: Upload file - THAY ĐỔI TẠI ĐÂY
       // Sử dụng fetch API với các tùy chọn cơ bản nhất để tránh thay đổi headers
-      const fetch = require('node-fetch');
+      const fetch = require('node-fetch@2');
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: req.file.buffer,
