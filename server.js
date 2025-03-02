@@ -137,12 +137,29 @@ app.post('/api/processPDF', upload.single('pdfFile'), async (req, res) => {
       return res.status(400).json({ error: true, message: 'Không có URL upload được trả về' });
     }
     
-    // BƯỚC 2: Upload file
-    await axios.put(uploadUrl, req.file.buffer, {
-      headers: {
-        'Content-Type': req.file.mimetype
+    try {
+      // BƯỚC 2: Upload file - THAY ĐỔI TẠI ĐÂY
+      // Sử dụng fetch API với các tùy chọn cơ bản nhất để tránh thay đổi headers
+      const fetch = require('node-fetch');
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: req.file.buffer,
+        headers: {
+          // Không đặt Content-Type hoặc các headers khác
+        }
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload thất bại: ${uploadResponse.status} ${uploadResponse.statusText}`);
       }
-    });
+    } catch (uploadError) {
+      console.error('Lỗi chi tiết khi upload:', uploadError);
+      return res.status(500).json({ 
+        error: true, 
+        message: `Lỗi khi upload file: ${uploadError.message}`,
+        details: uploadError.toString()
+      });
+    }
     
     // BƯỚC 3: Trả về batch ID để client có thể poll
     res.json({
@@ -151,10 +168,23 @@ app.post('/api/processPDF', upload.single('pdfFile'), async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Lỗi processPDF:', error);
+    console.error('Lỗi processPDF:', error.message);
+    let errorMessage = error.message;
+    let errorDetails = null;
+    
+    if (error.response) {
+      errorDetails = {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      };
+      errorMessage = `${error.message} - Status: ${error.response.status}`;
+    }
+    
     res.status(error.response?.status || 500).json({
       error: true,
-      message: error.response?.data?.msg || error.message
+      message: errorMessage,
+      details: errorDetails
     });
   }
 });
