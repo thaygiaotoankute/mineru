@@ -140,7 +140,7 @@ app.post('/api/processPDF', upload.single('pdfFile'), async (req, res) => {
     try {
       // BƯỚC 2: Upload file - THAY ĐỔI TẠI ĐÂY
       // Sử dụng fetch API với các tùy chọn cơ bản nhất để tránh thay đổi headers
-      const fetch = require('node-fetch@2');
+      const fetch = require('node-fetch');
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: req.file.buffer,
